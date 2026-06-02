@@ -2,6 +2,7 @@ import { WS } from '@/helpers/ws'
 import { SignalBody, TextPayload, WsEventTypes, WsProtocol } from '@/interface/eventType'
 import { StreamState } from '@/interface/voiceChat'
 import { AvatarHandler } from '@renderer/handlers/avatarHandler'
+import { BargeInDetector } from '@/helpers/bargeInDetector'
 import { setupWebRTC, stop } from '@/utils/webrtcUtils'
 import { message } from 'ant-design-vue'
 import { nanoid } from 'nanoid'
@@ -20,6 +21,8 @@ interface VideoChatState {
   gsLoadPercent: number
   localAvatarRenderer: AvatarHandler | null
   chatDataChannel: RTCDataChannel | null
+  bargeInDetector: BargeInDetector | null
+  bargeInUnwatch: (() => void) | null
 }
 
 export const useVideoChatStore = defineStore('videoChatStore', {
@@ -31,6 +34,8 @@ export const useVideoChatStore = defineStore('videoChatStore', {
       gsLoadPercent: 0,
       localAvatarRenderer: null,
       chatDataChannel: null,
+      bargeInDetector: null,
+      bargeInUnwatch: null,
     }
   },
   getters: {},
@@ -50,6 +55,7 @@ export const useVideoChatStore = defineStore('videoChatStore', {
               break
             case 'disconnected':
               this.streamState = StreamState.closed
+              this.teardownBargeIn()
               stop(this.peerConnection!)
               break
             default:
@@ -63,6 +69,7 @@ export const useVideoChatStore = defineStore('videoChatStore', {
             this.webRTCId = webRTCId as string
             this.chatDataChannel = dataChannel as RTCDataChannel
             this.initChatDataChannel()
+            this.setupBargeIn(mediaStore.stream)
 
             if (appStore.avatarType === 'lam') {
               if (appStore.wsSessionRoute) {
@@ -85,6 +92,7 @@ export const useVideoChatStore = defineStore('videoChatStore', {
         stop(this.peerConnection!)
         this.streamState = StreamState.closed
         appStore.resetChatRecords()
+        this.teardownBargeIn()
         this.chatDataChannel = null
         chatStore.replying = false
         await mediaStore.accessDevice()
@@ -137,6 +145,45 @@ export const useVideoChatStore = defineStore('videoChatStore', {
             payload: {},
           })
         )
+      }
+    },
+    /**
+     * Voice barge-in (BARGEIN_DESIGN.md Option A). Attaches a client-side mic VAD
+     * that, while the bot is speaking, reuses the existing `interrupt()` sender.
+     * Armed only during bot playback via the `chatStore.replying` flag.
+     */
+    setupBargeIn(stream: MediaStream | null) {
+      this.teardownBargeIn()
+      if (!stream) return
+      const appStore = useAppStore()
+      const chatStore = useChatStore()
+
+      const detector = new BargeInDetector(() => {
+        // Same path the manual interrupt button uses — do not invent a new signal.
+        this.interrupt()
+      }, appStore.bargeIn)
+      detector.attach(stream)
+      this.bargeInDetector = detector
+
+      // Arm only while the bot is replying (CLIENT_PLAYBACK active) and the
+      // feature is enabled. Re-reading appStore.bargeIn keeps runtime tuning live.
+      this.bargeInUnwatch = watch(
+        () => [chatStore.replying, appStore.bargeIn.enabled] as const,
+        ([replying, enabled]) => {
+          detector.updateConfig(appStore.bargeIn)
+          detector.setArmed(Boolean(replying) && Boolean(enabled))
+        },
+        { immediate: true }
+      )
+    },
+    teardownBargeIn() {
+      if (this.bargeInUnwatch) {
+        this.bargeInUnwatch()
+        this.bargeInUnwatch = null
+      }
+      if (this.bargeInDetector) {
+        this.bargeInDetector.detach()
+        this.bargeInDetector = null
       }
     },
     initChatDataChannel() {

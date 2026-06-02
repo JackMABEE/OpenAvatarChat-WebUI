@@ -14,7 +14,13 @@ const defaultTrackConstraints = {
     width: 500,
     height: 500,
   },
-  audio: {},
+  // Browser-side audio processing. echoCancellation is critical for voice barge-in:
+  // it stops the bot's own playback from being picked up by the mic and self-interrupting.
+  audio: {
+    echoCancellation: true,
+    noiseSuppression: true,
+    autoGainControl: true,
+  },
 }
 
 type TrackConstraints =

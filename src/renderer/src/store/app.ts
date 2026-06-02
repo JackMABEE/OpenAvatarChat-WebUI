@@ -4,6 +4,7 @@ import { defineStore } from 'pinia'
 import { initConfig, makeURL } from '@/apis'
 import { useMediaStore } from './media'
 import { TextPayload } from '@renderer/interface/eventType'
+import { BargeInConfig, DEFAULT_BARGE_IN_CONFIG } from '@/helpers/bargeInDetector'
 
 type ChatRecord = {
   id: string
@@ -24,6 +25,8 @@ interface AppState {
 
   toolsVisible: boolean
   inputVisible: boolean
+  /** Voice barge-in (client-side mic VAD) settings; tunable + toggleable. */
+  bargeIn: BargeInConfig
 }
 
 export const useAppStore = defineStore('appStore', {
@@ -37,6 +40,7 @@ export const useAppStore = defineStore('appStore', {
     chatRecords: [],
     toolsVisible: true,
     inputVisible: true,
+    bargeIn: { ...DEFAULT_BARGE_IN_CONFIG },
   }),
   actions: {
     async init() {
@@ -76,6 +80,10 @@ export const useAppStore = defineStore('appStore', {
           }
           if (config.track_constraints) {
             mediaStore.setTrackConstraints(config.track_constraints)
+          }
+          // Optional server-side override of barge-in settings (non-breaking).
+          if (config.barge_in && typeof config.barge_in === 'object') {
+            this.bargeIn = { ...this.bargeIn, ...(config.barge_in as Partial<BargeInConfig>) }
           }
         })
         .catch((e) => {
