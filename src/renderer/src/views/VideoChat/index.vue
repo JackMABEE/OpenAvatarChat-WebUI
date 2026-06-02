@@ -1,6 +1,7 @@
 <template>
   <div ref="wrapRef" class="page-container">
     <div class="content-container">
+      <ParticipantInfoForm v-if="streamState !== 'open'" />
       <div
         class="video-container"
         :style="{
@@ -92,6 +93,7 @@ import { onMounted, ref, useTemplateRef } from 'vue'
 import ActionGroup from '@/components/ActionGroup.vue'
 import ChatBtn from '@/components/ChatBtn.vue'
 import ChatInput from '@/components/ChatInput.vue'
+import ParticipantInfoForm from '@/components/ParticipantInfoForm.vue'
 import ChatRecords from '@/components/ChatRecords.vue'
 import { useAppStore } from '@/store/app'
 import { useChatStore } from '@/store/chat'

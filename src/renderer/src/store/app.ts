@@ -5,6 +5,7 @@ import { initConfig, makeURL } from '@/apis'
 import { useMediaStore } from './media'
 import { TextPayload } from '@renderer/interface/eventType'
 import { BargeInConfig, DEFAULT_BARGE_IN_CONFIG } from '@/helpers/bargeInDetector'
+import { ParticipantInfo, emptyParticipantInfo } from '@/interface/participant'
 
 type ChatRecord = {
   id: string
@@ -27,6 +28,9 @@ interface AppState {
   inputVisible: boolean
   /** Voice barge-in (client-side mic VAD) settings; tunable + toggleable. */
   bargeIn: BargeInConfig
+  /** Personalization: whether to send participant info, and the form fields. */
+  participantEnabled: boolean
+  participant: ParticipantInfo
 }
 
 export const useAppStore = defineStore('appStore', {
@@ -41,6 +45,8 @@ export const useAppStore = defineStore('appStore', {
     toolsVisible: true,
     inputVisible: true,
     bargeIn: { ...DEFAULT_BARGE_IN_CONFIG },
+    participantEnabled: true,
+    participant: emptyParticipantInfo(),
   }),
   actions: {
     async init() {

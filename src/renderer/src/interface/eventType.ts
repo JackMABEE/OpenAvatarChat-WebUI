@@ -14,6 +14,7 @@ export enum WsProtocol {
   SendHumanAudio = 'SendHumanAudio',
   SendHumanVideo = 'SendHumanVideo',
   SendHumanText = 'SendHumanText',
+  SetParticipantInfo = 'SetParticipantInfo',
   TriggerHeartbeat = 'TriggerHeartbeat',
   Interrupt = 'Interrupt',
   EndSpeech = 'EndSpeech',
@@ -225,6 +226,7 @@ export type WsPayloadMap = {
   [WsProtocol.SendHumanAudio]: SendHumanAudioPayload
   [WsProtocol.SendHumanVideo]: SendHumanVideoPayload
   [WsProtocol.SendHumanText]: SendHumanTextPayload
+  [WsProtocol.SetParticipantInfo]: Record<string, string>
   [WsProtocol.TriggerHeartbeat]: undefined
   [WsProtocol.Interrupt]: InterruptPayload
   [WsProtocol.EndSpeech]: EndSpeechPayload

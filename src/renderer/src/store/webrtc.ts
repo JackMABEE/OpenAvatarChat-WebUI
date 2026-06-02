@@ -4,6 +4,7 @@ import { StreamState } from '@/interface/voiceChat'
 import { AvatarHandler } from '@renderer/handlers/avatarHandler'
 import { BargeInDetector } from '@/helpers/bargeInDetector'
 import { setupWebRTC, stop } from '@/utils/webrtcUtils'
+import { nonEmptyParticipantFields } from '@/interface/participant'
 import { message } from 'ant-design-vue'
 import { nanoid } from 'nanoid'
 import { defineStore } from 'pinia'
@@ -186,9 +187,35 @@ export const useVideoChatStore = defineStore('videoChatStore', {
         this.bargeInDetector = null
       }
     },
+    /**
+     * Personalization (PERSONALIZATION_DESIGN.md Option A): send participant basic info
+     * over the data channel so the backend merges it into the LLM system prompt for this
+     * session. No-op when disabled or all fields empty (behavior unchanged).
+     */
+    sendParticipantInfo() {
+      if (!this.chatDataChannel || this.chatDataChannel.readyState !== 'open') return
+      const appStore = useAppStore()
+      if (!appStore.participantEnabled) return
+      const payload = nonEmptyParticipantFields(appStore.participant)
+      this.chatDataChannel.send(
+        JSON.stringify({
+          header: { name: WsProtocol.SetParticipantInfo, request_id: nanoid() },
+          payload,
+        })
+      )
+      console.log('sendParticipantInfo', payload)
+    },
     initChatDataChannel() {
       if (!this.chatDataChannel) return
       const chatStore = useChatStore()
+      // Send participant info once the channel is ready (before the first user turn).
+      if (this.chatDataChannel.readyState === 'open') {
+        this.sendParticipantInfo()
+      } else {
+        this.chatDataChannel.addEventListener('open', () => this.sendParticipantInfo(), {
+          once: true,
+        })
+      }
       this.chatDataChannel.addEventListener('message', (event) => {
         const data = JSON.parse(event.data)
         const headerName = data?.header?.name as WsProtocol | undefined
