@@ -16,7 +16,7 @@ const { participant, participantEnabled } = storeToRefs(appStore)
   <div class="participant-form">
     <label class="participant-toggle">
       <input v-model="participantEnabled" type="checkbox" />
-      <span>个性化 / Personalize</span>
+      <span>Personalize</span>
     </label>
     <div v-if="participantEnabled" class="participant-fields">
       <div v-for="f in PARTICIPANT_FIELDS" :key="f.key" class="participant-row">
@@ -28,7 +28,9 @@ const { participant, participantEnabled } = storeToRefs(appStore)
           :placeholder="f.placeholder"
         />
       </div>
-      <p class="participant-hint">填写后将用于个性化回复；留空则与默认行为一致。</p>
+      <p class="participant-hint">
+        Fill in to personalize replies; leave blank to keep default behavior.
+      </p>
     </div>
   </div>
 </template>

@@ -17,11 +17,11 @@ export const PARTICIPANT_FIELDS: ReadonlyArray<{
   label: string
   placeholder: string
 }> = [
-  { key: 'name', label: '称呼 / Name', placeholder: '如何称呼你' },
-  { key: 'age', label: '年龄 / Age', placeholder: '可选' },
-  { key: 'language', label: '语言 / Language', placeholder: '可选' },
-  { key: 'background', label: '背景 / Background', placeholder: '如：高中生、医生' },
-  { key: 'context', label: '场景 / Context', placeholder: '如：博物馆讲解' },
+  { key: 'name', label: 'Name', placeholder: 'What should I call you?' },
+  { key: 'age', label: 'Age', placeholder: 'Optional' },
+  { key: 'language', label: 'Language', placeholder: 'Optional' },
+  { key: 'background', label: 'Background', placeholder: 'e.g. high-school student, doctor' },
+  { key: 'context', label: 'Context', placeholder: 'e.g. museum guide' },
 ]
 
 export function emptyParticipantInfo(): ParticipantInfo {
