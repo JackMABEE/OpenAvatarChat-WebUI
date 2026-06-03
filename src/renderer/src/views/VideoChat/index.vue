@@ -1,6 +1,6 @@
 <template>
   <div ref="wrapRef" class="page-container">
-    <div class="content-container">
+    <div class="content-container" :class="{ 'pre-session': streamState !== 'open' }">
       <ParticipantInfoForm v-if="streamState !== 'open'" />
       <div
         class="video-container"

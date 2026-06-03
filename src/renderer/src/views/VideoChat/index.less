@@ -16,6 +16,22 @@
   height: 100%;
   max-width: calc(100%);
 }
+// Pre-session only (participant form visible): stack as a flex column so the form,
+// video and the "start chat" button all fit within the clipped page height. The
+// video shrinks to fill the remaining space instead of taking a fixed 85% that would
+// push the start button out of the overflow:hidden viewport. In-call layout untouched.
+.content-container.pre-session {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+
+  .video-container {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+  }
+}
 .video-container {
   -webkit-app-region: drag;
   position: relative;
