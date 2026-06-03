@@ -208,13 +208,18 @@ export const useVideoChatStore = defineStore('videoChatStore', {
     initChatDataChannel() {
       if (!this.chatDataChannel) return
       const chatStore = useChatStore()
-      // Send participant info once the channel is ready (before the first user turn).
+      // Fix A: send participant info AFTER the stream is established — i.e. past the
+      // backend's ~0.5s stream start-delay drop window (rtc_stream stream_start_delay).
+      // Sending immediately on 'open' lands inside that window and gets discarded.
+      // (Backend Fix B exempts SetParticipantInfo from that drop as a backstop.)
+      const PARTICIPANT_INFO_SEND_DELAY_MS = 1500
+      const scheduleParticipantInfo = (): void => {
+        window.setTimeout(() => this.sendParticipantInfo(), PARTICIPANT_INFO_SEND_DELAY_MS)
+      }
       if (this.chatDataChannel.readyState === 'open') {
-        this.sendParticipantInfo()
+        scheduleParticipantInfo()
       } else {
-        this.chatDataChannel.addEventListener('open', () => this.sendParticipantInfo(), {
-          once: true,
-        })
+        this.chatDataChannel.addEventListener('open', scheduleParticipantInfo, { once: true })
       }
       this.chatDataChannel.addEventListener('message', (event) => {
         const data = JSON.parse(event.data)
